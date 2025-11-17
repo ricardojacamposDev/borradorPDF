@@ -56,6 +56,40 @@ Fluxo sugerido:
 4. Repita o processo em quantas páginas quiser.
 5. Baixe o PDF resultante pelo botão **"Baixar PDF borrado"**.
 
+## Implantação no Heroku
+
+Pré-requisitos:
+
+- Conta no [Heroku](https://dashboard.heroku.com/) com o Heroku CLI instalado.
+- Plano que permita apps com buildpacks Python padrão.
+
+Arquivos adicionados:
+
+- `runtime.txt`: fixa a versão do Python usada no dyno (`python-3.11.9`).
+- `Procfile`: inicia o Streamlit com `streamlit run streamlit_app.py --server.port=$PORT ...`.
+- `setup.sh`: cria `~/.streamlit/config.toml` com as flags necessárias (headless, CORS off, porta dinâmica).
+
+Passo a passo recomendado:
+
+```bash
+# 1. Login (caso ainda não tenha feito)
+heroku login
+
+# 2. Criar app (substitua NOME_DO_APP pelo identificador desejado)
+heroku create NOME_DO_APP
+
+# 3. Garantir que o remote heroku foi adicionado
+git remote add heroku https://git.heroku.com/NOME_DO_APP.git
+
+# 4. Fazer deploy
+git push heroku main
+
+# 5. (Opcional) Acompanhar logs em tempo real
+heroku logs --tail --app NOME_DO_APP
+```
+
+> Dica: se quiser configurar variáveis adicionais (ex.: proteger o app com senha), use `heroku config:set VAR=valor` e leia essas variáveis dentro do `streamlit_app.py`.
+
 ## Testes
 
 Há um teste simples para a função de processamento de imagem:
