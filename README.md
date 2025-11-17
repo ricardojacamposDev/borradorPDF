@@ -24,7 +24,7 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-## Como executar
+## Como executar (interface desktop)
 
 ```bash
 source .venv/bin/activate  # se ainda não estiver ativa
@@ -36,6 +36,23 @@ python app.py
 3. Ajuste o raio de desfoque, se necessário, e pressione **"Aplicar desfoque"**.
 4. Repita em outras páginas usando os botões de navegação.
 5. Clique em **"Salvar PDF"** quando terminar.
+
+## Interface web com Streamlit
+
+Também é possível rodar a aplicação no navegador, com upload de PDF e seleção de áreas diretamente na tela:
+
+```bash
+source .venv/bin/activate
+streamlit run streamlit_app.py
+```
+
+Fluxo sugerido:
+
+1. Faça upload do PDF na barra lateral do Streamlit.
+2. Use o slider para escolher a página e o controle de desfoque para definir a intensidade.
+3. Desenhe um retângulo sobre a página usando o canvas interativo; clique em **"Aplicar desfoque"** para salvar a alteração.
+4. Repita o processo em quantas páginas quiser.
+5. Baixe o PDF resultante pelo botão **"Baixar PDF borrado"**.
 
 ## Testes
 
