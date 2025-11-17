@@ -43,8 +43,10 @@ Também é possível rodar a aplicação no navegador, com upload de PDF e sele�
 
 ```bash
 source .venv/bin/activate
-streamlit run streamlit_app.py
+python -m streamlit run streamlit_app.py
 ```
+
+> Dica: se `which streamlit` apontar para fora da pasta `.venv`, prefira sempre `python -m streamlit ...` para garantir que o interpretador correto (com PyMuPDF) seja usado. Caso tenha instalado um pacote "fitz" globalmente, remova-o com `pip uninstall fitz` para evitar conflitos.
 
 Fluxo sugerido:
 

@@ -6,12 +6,69 @@ import io
 from dataclasses import dataclass
 from typing import Dict, Optional
 
-import fitz
+try:
+    import fitz
+except ModuleNotFoundError as exc:  # pragma: no cover - environment issue
+    raise ImportError(
+        "O módulo 'fitz' (PyMuPDF) não foi encontrado. Ative a virtualenv do projeto "
+        "e execute 'pip install -r requirements.txt' antes de rodar o Streamlit."
+    ) from exc
+except Exception as exc:  # pragma: no cover
+    raise ImportError(
+        "Foi encontrado um pacote 'fitz' incompatível. Remova-o com 'pip uninstall fitz' "
+        "no Python global e rode esta aplicação usando o Python da pasta .venv: "
+        "python -m streamlit run streamlit_app.py"
+    ) from exc
+
 import streamlit as st
+import streamlit.elements.image as st_image
 from PIL import Image
-from streamlit_drawable_canvas import st_canvas
+from streamlit.elements.lib.image_utils import image_to_url as _image_to_url
+from streamlit.elements.lib.layout_utils import LayoutConfig
 
 from pdf_blur.processing import Rect, blur_region
+def _ensure_streamlit_image_patch() -> None:
+    """Provide compatibility for streamlit_drawable_canvas on Streamlit >=1.50."""
+
+    if hasattr(st_image, "image_to_url"):
+        return
+
+    def _patched_image_to_url(
+        image: Image.Image,
+        width: int,
+        clamp: bool,
+        channels: str,
+        output_format: str,
+        image_id: str,
+    ) -> str:
+        layout = LayoutConfig(width=width)
+        return _image_to_url(
+            image,
+            layout,
+            clamp=clamp,
+            channels=channels,
+            output_format=output_format,
+            image_id=image_id,
+        )
+
+    st_image.image_to_url = _patched_image_to_url  # type: ignore[attr-defined]
+
+
+_ensure_streamlit_image_patch()
+
+from streamlit_drawable_canvas import st_canvas
+
+
+def _streamlit_rerun() -> None:
+    """Compatibility wrapper for Streamlit rerun API across versions."""
+
+    if hasattr(st, "rerun"):
+        st.rerun()
+        return
+    if hasattr(st, "experimental_rerun"):
+        st.experimental_rerun()
+        return
+    raise RuntimeError("Nenhum método de rerun disponível nesta versão do Streamlit.")
 
 PageIndex = int
 _ImageBytes = bytes
@@ -147,7 +204,16 @@ def main() -> None:
         return
 
     page_count = _page_count(pdf_bytes)
-    current_page = st.slider("Página", 1, page_count, value=st.session_state.get("current_page", 1))
+    if page_count <= 1:
+        st.info("Este PDF possui apenas uma página.")
+        current_page = 1
+    else:
+        current_page = st.slider(
+            "Página",
+            min_value=1,
+            max_value=page_count,
+            value=min(st.session_state.get("current_page", 1), page_count),
+        )
     st.session_state["current_page"] = current_page
     page_index = current_page - 1
 
@@ -174,13 +240,13 @@ def main() -> None:
                 updated = blur_region(working_image, selection.as_rect, radius=blur_radius)
                 _store_modified_page(page_index, updated)
                 st.success("Área borrada nesta página.")
-                st.experimental_rerun()
+                _streamlit_rerun()
 
     with col_right:
         if page_index in st.session_state.get("modified_pages", {}):
             if st.button("Desfazer alterações desta página"):
                 st.session_state["modified_pages"].pop(page_index, None)
-                st.experimental_rerun()
+                _streamlit_rerun()
         else:
             st.caption("Esta página ainda não foi modificada.")
 
